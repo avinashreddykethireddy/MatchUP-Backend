@@ -5,11 +5,22 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const { initializeApp } = require("firebase/app");
 const { getAnalytics } = require("firebase/analytics");
+const morgan = require('morgan');
+const fsr = require('file-stream-rotator');
 require("dotenv").config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+/* Morgan */
+morgan.token('resBody', (req, res) => res.resBody);
+
+let logsinfo = fsr.getStream({filename:'./matchup-logs/logs.log', frequency:"1h",verbose: true, date_format: "YYYY-MM-DD",}); 
+
+/* app.use(morgan(':method :url :status :res[content-length] - :response-time ms', {stream: logsinfo})) */
+app.use(morgan('combined', {stream: logsinfo}))
+
 
 /* global process */
 mongoose.connect(process.env.MONGODB_URI);
