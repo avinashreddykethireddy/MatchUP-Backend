@@ -70,7 +70,7 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
     if (admin.apps.length === 0) {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
-            storageBucket: "matchup-12345.appspot.com"
+            storageBucket: "matchup-444.appspot.com"
         });
     }
     var bucket = admin.storage().bucket();
@@ -95,7 +95,7 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
           metadata: metadata,
         })
         .then((data) => {
-            productImageLink = ("https://storage.googleapis.com/matchup-12345.appspot.com/" + req.file.filename);
+            productImageLink = ("https://storage.googleapis.com/matchup-444.appspot.com/" + req.file.filename);
         })
         .catch((err) => {
            return err

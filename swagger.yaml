@@ -535,7 +535,7 @@ components:
             example:
                 name: Apple MacBook,
                 price: 9999,
-                cover : https://storage.googleapis.com/matchup-12345.appspot.com/macbook.jpg
+                cover : https://storage.googleapis.com/matchup-444.appspot.com/macbook.jpg
                 sellerUserId: 6246e608b1923e4b8f0f9ece
         Blog:
             type: object
@@ -560,7 +560,7 @@ components:
             example:
                 title: Harry Porter,
                 description: Fantacy,
-                productImage: https://storage.googleapis.com/matchup-12345.appspot.com/24839.jpg,
+                productImage: https://storage.googleapis.com/matchup-444.appspot.com/24839.jpg,
                 sellerUserId: 6246e608b1923e4b8f0f9ece
 
 definitions:

@@ -76,7 +76,7 @@ router.post("/signup",upload.single('file'), async (req,res)=>{
     if (admin.apps.length === 0) {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
-            storageBucket: "matchup-12345.appspot.com"
+            storageBucket: "matchup-444.appspot.com"
         });
     }
  
@@ -102,7 +102,7 @@ router.post("/signup",upload.single('file'), async (req,res)=>{
             metadata: metadata,
         })
         .then((data) => {
-            profileImageLink = ("https://storage.googleapis.com/matchup-12345.appspot.com/" + req.file.filename);
+            profileImageLink = ("https://storage.googleapis.com/matchup-444.appspot.com/" + req.file.filename);
         })
         .catch((err) => {
             return err

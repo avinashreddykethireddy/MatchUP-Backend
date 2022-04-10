@@ -91,7 +91,7 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
     if (admin.apps.length === 0) {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
-            storageBucket: "matchup-12345.appspot.com"
+            storageBucket: "matchup-444.appspot.com"
         });
     }
     var bucket = admin.storage().bucket();
@@ -116,7 +116,7 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
           metadata: metadata,
         })
         .then((data) => {
-            coverLink = ("https://storage.googleapis.com/matchup-12345.appspot.com/" + data[1].name);
+            coverLink = ("https://storage.googleapis.com/matchup-444.appspot.com/" + data[1].name);
         })
       
       console.log(`${filename} uploaded.`);
