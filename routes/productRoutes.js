@@ -12,6 +12,10 @@ const admin = require("firebase-admin");
 const serviceAccount = require("../serviceAccountKey.json");
 const uuid = require('uuid-v4');
 
+//Auth
+const auth = require("../middleware/auth");
+
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       cb(null, DIR);
@@ -66,7 +70,7 @@ router.get("/:pageNo", async (req, res) => {
 });
 
 // Create a Product
-router.post("/", upload.single('file') ,async (req, res) => {
+router.post("/",auth, upload.single('file') ,async (req, res) => {
 
     try {
 
@@ -144,12 +148,12 @@ router.post("/", upload.single('file') ,async (req, res) => {
 });
 
 // Get a single Product
-router.get("/:id", getProduct, async (req, res) => {
+router.get("/:id",auth, getProduct, async (req, res) => {
     return res.status(200).json(res.product);
 });
 
 // Update the product
-router.patch("/:id", async (req, res) => {
+router.patch("/:id",auth, async (req, res) => {
     if(req.body.name == null && req.body.price == null){
         return res.status(422).json({message: "Please Enter atleast one field"});
     }
@@ -182,7 +186,7 @@ router.patch("/:id", async (req, res) => {
 });
 
 // Delete the product
-router.delete("/:id", async (req, res) => {
+router.delete("/:id",auth, async (req, res) => {
     let product;
     try {
         product = await Product.findById(req.params.id);

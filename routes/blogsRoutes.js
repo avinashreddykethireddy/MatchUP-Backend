@@ -12,6 +12,10 @@ const admin = require("firebase-admin");
 const serviceAccount = require("../serviceAccountKey.json");
 const uuid = require('uuid-v4');
 
+//Auth
+
+const auth = require("../middleware/auth");
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       cb(null, DIR);
@@ -44,7 +48,7 @@ router.get("/", async (req, res) => {
 });
 
 // Create a Blog
-router.post("/", upload.single('file') ,async (req, res) => {
+router.post("/",auth, upload.single('file') ,async (req, res) => {
 
     try {
 
@@ -125,12 +129,12 @@ router.post("/", upload.single('file') ,async (req, res) => {
     }
 });
 // Get a single Blog
-router.get("/:id", getBlog, async (req, res) => {
+router.get("/:id",auth, getBlog, async (req, res) => {
     return res.status(200).json(res.blog);
 });
 
 // Update the blog
-router.patch("/:id", async (req, res) => {
+router.patch("/:id",auth, async (req, res) => {
     if(req.body.title == null && req.body.description == null){
         return res.status(422).json({message: "Please Enter atleast one field"});
     }
@@ -163,7 +167,7 @@ router.patch("/:id", async (req, res) => {
 });
 
 // Delete the blog
-router.delete("/:id", async (req, res) => {
+router.delete("/:id",auth, async (req, res) => {
     let blog;
     try {
         blog = await Blog.findById(req.params.id);

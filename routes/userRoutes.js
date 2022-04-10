@@ -8,7 +8,7 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
-
+const Blog = require("../models/Blog");
 const admin = require("firebase-admin");
 const serviceAccount = require("../serviceAccountKey.json");
 const uuid = require('uuid-v4');
@@ -19,7 +19,7 @@ const GetAllBlogs = require("../services/GetAllBlogs");
 
 //Auth
 
-const Auth = require("../middleware/Auth");
+const auth = require("../middleware/auth");
 
 
 const storage = multer.diskStorage({
@@ -44,7 +44,7 @@ let upload = multer({
     }
 });
 // Get all the users
-router.get("/", async (req, res) => {
+router.get("/",auth, async (req, res) => {
     try {
         const users = await User.find();
         res.json(users);
@@ -186,7 +186,7 @@ router.post('/signin',(req,res)=>{
 
 
 // Get a single User by id
-router.get("/:id", async (req, res) => {
+router.get("/:id",auth, async (req, res) => {
     let user;
     try {
         user = await User.findById(req.params.id);
@@ -200,7 +200,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Delete the user by id
-router.delete("/:id", async (req, res) => {
+router.delete("/:id",auth, async (req, res) => {
     let user;
     try {
         user = await User.findById(req.params.id);
@@ -216,7 +216,7 @@ router.delete("/:id", async (req, res) => {
     }
 });
 // Update the user by id
-router.patch("/:id", async (req,res) => {
+router.patch("/:id",auth, async (req,res) => {
     // let user = await User.findById(req.params.id);
     // if(user == null){
     //     return res.status(400).json({ message: "User does not exist" });
@@ -258,7 +258,7 @@ router.patch("/:id", async (req,res) => {
 /* ------------------------Recently Viewed Products------------------------ */
 
 // Add a product to User's recentProducts list
-router.post('/recentProducts/:userId/:productId', async (req, res) => {
+router.post('/recentProducts/:userId/:productId',auth, async (req, res) => {
     try {
     const {userId, productId} = req.params;
     if(!userId || !productId) {
@@ -323,7 +323,7 @@ router.post('/recentProducts/:userId/:productId', async (req, res) => {
 });
 
 // Get a product from User's recentProducts list
-router.get('/recentProducts/:userId', async (req, res) => {
+router.get('/recentProducts/:userId',auth, async (req, res) => {
     const {userId} = req.params;
     if(!userId) {
         return res.status(404).json({ message: "Invalid User Id"});
@@ -344,7 +344,7 @@ router.get('/recentProducts/:userId', async (req, res) => {
     })
 });
 // Remove a product from User's recentProducts list
-router.delete('/recentProducts/:userId/:productId', async (req, res) => {
+router.delete('/recentProducts/:userId/:productId',auth, async (req, res) => {
     let user;
     try {
         user = await User.findById(req.params.userId);
@@ -376,7 +376,7 @@ router.delete('/recentProducts/:userId/:productId', async (req, res) => {
 /* ------------------------FavouriteBlogs------------------------ */
 
 // Add a blog to User's favouriteBlogs list
-router.post('/favouriteBlogs/:userId/:blogId', async (req, res) => {
+router.post('/favouriteBlogs/:userId/:blogId',auth, async (req, res) => {
     try {
     const {userId, blogId} = req.params;
     if(!userId || !blogId) {
@@ -441,7 +441,7 @@ router.post('/favouriteBlogs/:userId/:blogId', async (req, res) => {
 });
 
 // Get a blog from User's favouriteBlogs list
-router.get('/favouriteBlogs/:userId', async (req, res) => {
+router.get('/favouriteBlogs/:userId',auth, async (req, res) => {
     const {userId} = req.params;
     if(!userId) {
         return res.status(404).json({ message: "Invalid User Id"});
@@ -465,7 +465,7 @@ router.get('/favouriteBlogs/:userId', async (req, res) => {
     })
 });
 // Remove a blog from User's favouriteBlogs list
-router.delete('/favouriteBlogs/:userId/:blogId', async (req, res) => {
+router.delete('/favouriteBlogs/:userId/:blogId',auth, async (req, res) => {
     let user;
     try {
         user = await User.findById(req.params.userId);
@@ -498,7 +498,7 @@ router.delete('/favouriteBlogs/:userId/:blogId', async (req, res) => {
 /* ------------------------Cart Products------------------------ */
 
 // Add a product to Cart
-router.post('/cartProducts/:userId/:productId', async (req, res) => {
+router.post('/cartProducts/:userId/:productId',auth, async (req, res) => {
     try {
     const quantity = req.body.quantity;
     const {userId, productId} = req.params;
@@ -600,7 +600,7 @@ router.post('/cartProducts/:userId/:productId', async (req, res) => {
     }
 });
 // Get a product from User's cartProducts list
-router.get('/cartProducts/:userId', async (req, res) => {
+router.get('/cartProducts/:userId',auth, async (req, res) => {
     const {userId} = req.params;
     if(!userId) {
         return res.status(404).json({ message: "Invalid User Id"});
@@ -632,7 +632,7 @@ router.get('/cartProducts/:userId', async (req, res) => {
 });
 
 // Remove a product from User's cartProducts list
-router.delete('/cartProducts/:userId/:productId', async (req, res) => {
+router.delete('/cartProducts/:userId/:productId',auth, async (req, res) => {
     try {
         const {userId, productId} = req.params;
         const products = await GetAllProducts();
