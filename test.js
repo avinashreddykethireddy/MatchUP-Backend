@@ -16,11 +16,7 @@ const { route } = require("./blogsRoutes");
 
 const GetAllProducts = require("../services/GetAllProducts");
 const GetAllBlogs = require("../services/GetAllBlogs");
-
-//Auth
-
-const Auth = require("../middleware/Auth");
-
+const Blog = require("../models/Blog");
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -62,9 +58,6 @@ router.post("/signup",upload.single('file'), async (req,res)=>{
     const {email,firstName,lastName,password,DOB,phone} = req.body;
     if(!email || !password || !firstName || !lastName || !DOB || !phone){
         return res.status(422).json({message:"Please Enter all fields"});
-    }
-    if(phone.toString().length != 10){
-        return res.status(422).json({message:"Phone Number must be at 10 Digits!"});
     }
     await User.findOne({email})
     .then((savedUser)=>{
@@ -125,8 +118,8 @@ router.post("/signup",upload.single('file'), async (req,res)=>{
             lastName : lastName,
             email : email,
             DOB : DOB,
-            phone : phone,
             password:hashedpassword,
+            phone: phone,
             profileImage: profileImageLink,
             recentlyViewedProducts : [],
             favouriteBlogs :  [],
@@ -161,16 +154,14 @@ router.post('/signin',(req,res)=>{
     .then(savedUser => {
         if(!savedUser){
             return res.status(422).json({message:"Invalid email or password"})
-        }     
-        bcrypt.compare(password,savedUser.password)     
+        }
+        bcrypt.compare(password,savedUser.password)
         .then(doMatch=>{
             if(doMatch){
                 // res.json({message:"SignIn successfull"})
-                const token = jwt.sign({_id:savedUser._id,email:savedUser.email},process.env.JWT_SECRET,   {
-                    expiresIn: "2h",
-                })
-                const {_id,email,firstName,lastName,profileImage,DOB,phone} = savedUser
-                return res.status(200).json({token,user:{_id,email,firstName,lastName,profileImage,DOB,phone}})
+                const token = jwt.sign({_id:savedUser._id},process.env.JWT_SECRET)
+                const {_id,email,firstName,lastName,profileImage} = savedUser
+                return res.status(200).json({token,user:{_id,email,firstName,lastName,profileImage}})
             }else{
                 return res.status(422).json({error:"Invalid Email or Password"})
             }
@@ -215,31 +206,28 @@ router.delete("/:id", async (req, res) => {
         return res.status(500).json({ message: "Failed Deleting User",error: error.message });
     }
 });
+
 // Update the user by id
 router.patch("/:id", async (req,res) => {
     // let user = await User.findById(req.params.id);
     // if(user == null){
     //     return res.status(400).json({ message: "User does not exist" });
     // }
-    if(!req.body.firstName || !req.body.lastName || !req.body.email || !req.body.DOB || !req.body.phone) {
-        return res.status(422).json({ message: "Please Enter all fields" });
-    }
-    if(req.body.phone.toString().length != 10){
-        return res.status(422).json({ message: "Phone Number must be 10 Digits"})
-    }
     try{
+        
         User.findOne({_id: req.params.id}, function(err, user) {
             if(!err){
-              
-                user.firstName = req.body.firstName;
-                user.lastName = req.body.lastName;
-                user.email = req.body.email;
-                user.DOB = req.body.DOB;
-                user.phone = req.body.phone;
+                if(req.body.firstName && req.body.lastName && req.body.email && req.body.DOB && req.body.phone) {
+                    user.firstName = req.body.firstName;
+                    user.lastName = req.body.lastName;
+                    user.email = req.body.email;
+                    user.DOB = req.body.DOB;
+                    user.phone = req.body.phone;
+                }   
 
                 user.save(function(err) {
                     if(!err) {
-                        return res.status(200).json({ message: `User Updated Successfully`,user: user });
+                        return res.status(200).json({ message: `User Updated Successfully`})
                     }
                     else {
                         return res.status(422).json({ message: "Error updating user"});
@@ -343,6 +331,7 @@ router.get('/recentProducts/:userId', async (req, res) => {
         }
     })
 });
+
 // Remove a product from User's recentProducts list
 router.delete('/recentProducts/:userId/:productId', async (req, res) => {
     let user;
@@ -537,22 +526,12 @@ router.post('/cartProducts/:userId/:productId', async (req, res) => {
             if(!user) {
                 return res.status(404).json({message:"No User found"})
             }
-            // const products = user.recentlyViewedProducts;
-            // let flag=1;
-            // if(products.length !== 0){
-            //     products.forEach(ele => {
-            //         if(currentProduct._id.toString() === ele._id.toString()){
-            //             flag = 0;
-            //         }
-            //     });
-            // }
-            // if(flag){
-            //     user.recentlyViewedProducts.push(currentProduct);
-            // }
+            
             const products = user.cartProducts;
             let flag=1;
             let quantity = 0;
             if(products.length !== 0){
+                console.log(products);
                 products.forEach(ele => {
                     if(productId.toString() === ele.productId){
                         flag = 0;
@@ -629,6 +608,17 @@ router.get('/cartProducts/:userId', async (req, res) => {
 
         return res.status(200).json({ cartProducts: products || []  });
     }
+    // User.findById(userId,  function(err, user) {
+    //     if(err) {
+    //         return res.status(404).send({message: "Invalid User Id"});
+    //     }
+    //     else{
+    //         if(user.cartProducts == null) {
+    //             return res.status(200).json({ cartProducts: []  });
+    //         }
+    //         return res.status(200).json({ cartProducts: user.cartProducts || []  });
+    //     }
+    // })
 });
 
 // Remove a product from User's cartProducts list
