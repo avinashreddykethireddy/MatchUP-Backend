@@ -14,7 +14,6 @@ app.use(express.json());
 app.use(cors());
 
 /* Morgan */
-morgan.token('resBody', (req, res) => res.resBody);
 
 let logsinfo = fsr.getStream({filename:'./matchup-logs/logs.log', frequency:"1h",verbose: true, date_format: "YYYY-MM-DD",}); 
 

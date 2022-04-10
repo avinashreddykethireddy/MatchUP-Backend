@@ -167,7 +167,7 @@ router.post('/signin',(req,res)=>{
             if(doMatch){
                 // res.json({message:"SignIn successfull"})
                 const token = jwt.sign({_id:savedUser._id,email:savedUser.email},process.env.JWT_SECRET,   {
-                    expiresIn: "2h",
+                    expiresIn: "24h",
                 })
                 const {_id,email,firstName,lastName,profileImage,DOB,phone} = savedUser
                 return res.status(200).json({token,user:{_id,email,firstName,lastName,profileImage,DOB,phone}})
@@ -539,13 +539,13 @@ router.delete('/cartProducts/:userId/:productId',auth, async (req, res) => {
                 
                 if(products.length !== 0){
                     products.forEach(ele => {
-                        if(productId.toString() === ele.toString()){
+                        if(productId.toString() === ele.productId.toString()){
                             products.remove(ele);
                         }
                     })
                 }
                 user.cartProducts = products;
-        
+                console.log(products)
                 // let newCart = await user.cartProducts.reduce((product) => {
                 //     console.log(product._id.toString());
                 //     console.log(productId)

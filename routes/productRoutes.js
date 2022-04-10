@@ -116,7 +116,7 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
           metadata: metadata,
         })
         .then((data) => {
-            coverLink = ("https://storage.googleapis.com/matchup-444.appspot.com/" + data[1].name);
+            coverLink = ("https://storage.googleapis.com/matchup-444.appspot.com/" + req.file.filename);
         })
       
       console.log(`${filename} uploaded.`);
