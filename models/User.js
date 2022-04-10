@@ -30,7 +30,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    recentlyViewedProducts :  [],
     favouriteBlogs :  [],
     cartProducts :  [],
     },{timestamps : true}
