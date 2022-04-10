@@ -561,6 +561,9 @@ definitions:
        type: string 
        required: true
        description: User password 
+    example:
+        email: "motrurishashank000@gmail.com"
+        password: "shashank"
   ProductPatchRequest:
     type: object
     items:

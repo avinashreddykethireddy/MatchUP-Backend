@@ -3,6 +3,7 @@ const productsRouter = require("./productRoutes");
 const blogsRouter = require("./blogsRoutes");
 const usersRouter = require("./userRoutes");
 
+
 const router = Router();
 
 router.use('/users',usersRouter);

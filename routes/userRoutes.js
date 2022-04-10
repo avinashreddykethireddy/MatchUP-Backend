@@ -17,6 +17,11 @@ const { route } = require("./blogsRoutes");
 const GetAllProducts = require("../services/GetAllProducts");
 const GetAllBlogs = require("../services/GetAllBlogs");
 
+//Auth
+
+const Auth = require("../middleware/Auth");
+
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       cb(null, DIR);
@@ -54,9 +59,12 @@ router.get("/", async (req, res) => {
 router.post("/signup",upload.single('file'), async (req,res)=>{
     try {
   
-    const {email,firstName,lastName,password,DOB} = req.body;
-    if(!email || !password || !firstName || !lastName || !DOB){
+    const {email,firstName,lastName,password,DOB,phone} = req.body;
+    if(!email || !password || !firstName || !lastName || !DOB || !phone){
         return res.status(422).json({message:"Please Enter all fields"});
+    }
+    if(phone.toString().length != 10){
+        return res.status(422).json({message:"Phone Number must be at 10 Digits!"});
     }
     await User.findOne({email})
     .then((savedUser)=>{
@@ -117,6 +125,7 @@ router.post("/signup",upload.single('file'), async (req,res)=>{
             lastName : lastName,
             email : email,
             DOB : DOB,
+            phone : phone,
             password:hashedpassword,
             profileImage: profileImageLink,
             recentlyViewedProducts : [],
@@ -157,9 +166,11 @@ router.post('/signin',(req,res)=>{
         .then(doMatch=>{
             if(doMatch){
                 // res.json({message:"SignIn successfull"})
-                const token = jwt.sign({_id:savedUser._id},process.env.JWT_SECRET)
-                const {_id,email,firstName,lastName,profileImage} = savedUser
-                return res.status(200).json({token,user:{_id,email,firstName,lastName,profileImage}})
+                const token = jwt.sign({_id:savedUser._id,email},process.env.JWT_SECRET,   {
+                    expiresIn: "2h",
+                })
+                const {_id,email,firstName,lastName,profileImage,DOB,phone} = savedUser
+                return res.status(200).json({token,user:{_id,email,firstName,lastName,profileImage,DOB,phone}})
             }else{
                 return res.status(422).json({error:"Invalid Email or Password"})
             }
@@ -398,6 +409,9 @@ router.get('/favouriteBlogs/:userId', async (req, res) => {
             return res.status(404).send({message: "Invalid User Id"});
         }
         else{
+            if(user.favouriteBlogs === null){
+                return res.status(200).json({ favouriteBlogs:  [] });
+            }
             return res.status(200).json({ favouriteBlogs: user.favouriteBlogs || [] });
         }
     })
