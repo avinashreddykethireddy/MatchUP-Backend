@@ -492,6 +492,7 @@ components:
                 - email
                 - password
                 - DOB
+                - phone
                 - file
             properties:
                 firstName:
@@ -509,6 +510,9 @@ components:
                 DOB :
                     type: string
                     description: Date of Birth of the User
+                phone:
+                    type: Number
+                    description: Phone number of the use
                 file:
                     type : file
                     description : Profile Image of the User
