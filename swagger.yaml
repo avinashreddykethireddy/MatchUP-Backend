@@ -511,11 +511,19 @@ components:
                     type: string
                     description: Date of Birth of the User
                 phone:
-                    type: Number
+                    type: number
                     description: Phone number of the use
                 file:
                     type : file
                     description : Profile Image of the User
+            example:
+                firstName: Shashank
+                lastName: Motruri
+                email: motrurishashank000@gmail.com
+                password: shashank
+                DOB: 2002-05-21
+                phone: 8978205663
+                file: https://storage.googleapis.com/matchup-444.appspot.com/macbook.jpg
         Product:
             type: object
             required:

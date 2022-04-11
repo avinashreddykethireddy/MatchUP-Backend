@@ -22,6 +22,7 @@ const GetAllBlogs = require("../services/GetAllBlogs");
 const auth = require("../middleware/auth");
 
 
+// Multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       cb(null, DIR);
@@ -60,9 +61,11 @@ router.post("/signup",upload.single('file'), async (req,res)=>{
     try {
   
     const {email,firstName,lastName,password,DOB,phone} = req.body;
+    // null check for body
     if(!email || !password || !firstName || !lastName || !DOB || !phone){
         return res.status(422).json({message:"Please Enter all fields"});
     }
+    // mobile number validate check 
     if(phone.toString().length != 10){
         return res.status(422).json({message:"Phone Number must be at 10 Digits!"});
     }
@@ -88,7 +91,6 @@ router.post("/signup",upload.single('file'), async (req,res)=>{
 
         const metadata = {
             metadata: {
-            // This line is very important. It's to create a download token.
             firebaseStorageDownloadTokens: uuid()
             },
             contentType: req.file.contentType,
@@ -97,7 +99,6 @@ router.post("/signup",upload.single('file'), async (req,res)=>{
         
         // Uploads a local file to the bucket
         await bucket.upload(filename, {
-            // Support for HTTP requests made with `Accept-Encoding: gzip`
             gzip: true,
             metadata: metadata,
         })
@@ -118,6 +119,7 @@ router.post("/signup",upload.single('file'), async (req,res)=>{
     });
         /* --------------------------------*/
 
+    // Encrypt password using bcrypt and store in database
     bcrypt.hash(password,10)
     .then((hashedpassword) => {
         const user = new User({
@@ -150,8 +152,6 @@ router.post("/signup",upload.single('file'), async (req,res)=>{
 })
 
 // SignIn       post      /auth/signin
-
-
 router.post('/signin',(req,res)=>{
     const {email,password} = req.body;
     if(!email || !password){
@@ -159,17 +159,19 @@ router.post('/signin',(req,res)=>{
     }
     User.findOne({email})
     .then(savedUser => {
+        // check if the user is valid or not
         if(!savedUser){
             return res.status(422).json({message:"Invalid email or password"})
         }     
+        // Compare user password with the encrypted password in database
         bcrypt.compare(password,savedUser.password)     
         .then(doMatch=>{
             if(doMatch){
-                // res.json({message:"SignIn successfull"})
                 const token = jwt.sign({_id:savedUser._id,email:savedUser.email},process.env.JWT_SECRET,   {
                     expiresIn: "24h",
                 })
-                const {_id,email,firstName,lastName,profileImage,DOB,phone} = savedUser
+                const {_id,email,firstName,lastName,profileImage,DOB,phone} = savedUser;
+                // return auth token
                 return res.status(200).json({token,user:{_id,email,firstName,lastName,profileImage,DOB,phone}})
             }else{
                 return res.status(422).json({error:"Invalid Email or Password"})
@@ -217,10 +219,6 @@ router.delete("/:id",auth, async (req, res) => {
 });
 // Update the user by id
 router.patch("/:id",auth, async (req,res) => {
-    // let user = await User.findById(req.params.id);
-    // if(user == null){
-    //     return res.status(400).json({ message: "User does not exist" });
-    // }
     if(!req.body.firstName || !req.body.lastName || !req.body.email || !req.body.DOB || !req.body.phone) {
         return res.status(422).json({ message: "Please Enter all fields" });
     }
@@ -280,11 +278,6 @@ router.post('/favouriteBlogs/:userId/:blogId',auth, async (req, res) => {
     }
 
     //All params OK
-    
-    // let currentBlog =  blogs.find((blog) =>  blog._id.toString() === blogId);
-    // if(!currentBlog){
-    //     return res.status(404).send({message: "Blog is Null"})
-    // }
     User.findOne({_id: userId}, function(err, user) {
         if(err) {
             return res.status(404).send({message: err.message});
@@ -295,6 +288,7 @@ router.post('/favouriteBlogs/:userId/:blogId',auth, async (req, res) => {
             }
             const blogs = user.favouriteBlogs;
             let flag=1;
+            // Check if the blog is already in the user's favorites list'
             if(blogs.length !== 0){
                 blogs.forEach(ele => {
                     if(blogId.toString() === ele.toString()){
@@ -302,19 +296,23 @@ router.post('/favouriteBlogs/:userId/:blogId',auth, async (req, res) => {
                     }
                 });
             }
+            // If not in the favorites list
             if(flag){
                 user.favouriteBlogs.push(blogId);
+                user.save(function(err) {
+                    if(!err) {
+                        return res.status(200).json({ message: `Blog Successfully Added to FavouriteBlogs`})
+                    }
+                    else {
+                        console.log(err);
+                        return res.status(422).json({ message: "Error Adding Blog to FavouriteBlogs"});
+                    }
+                });
             }
-
-            user.save(function(err) {
-                if(!err) {
-                    return res.status(200).json({ message: `Blog Successfully Added to FavouriteBlogs`})
-                }
-                else {
-                    console.log(err);
-                    return res.status(422).json({ message: "Error Adding Blog to FavouriteBlogs"});
-                }
-            });
+            // Already exists 
+            else{
+                return res.status(422).json({ message: "Blog already exists in Favourites"})
+            }
         }
     })
     } catch (error) {
@@ -322,8 +320,9 @@ router.post('/favouriteBlogs/:userId/:blogId',auth, async (req, res) => {
     }
 });
 
-// Get a blog from User's favouriteBlogs list
+// Get all favorite blogs from the User's favouriteBlogs list
 router.get('/favouriteBlogs/:userId',auth, async (req, res) => {
+    // Validate User
     const {userId} = req.params;
     if(!userId) {
         return res.status(404).json({ message: "Invalid User Id"});
@@ -335,9 +334,7 @@ router.get('/favouriteBlogs/:userId',auth, async (req, res) => {
         else{
             const blogIds = user.favouriteBlogs;
             const blogs = [];
-            // blogIds.forEach(async (id) => {
-            //     blogs.push(await Blog.findById(id));
-            // });
+            // GetAllBlogsbyId and send the favourite blogs
             await Promise.all(blogIds.map(async (id) => {
                 blogs.push(await Blog.findById(id));
             }));
@@ -350,12 +347,12 @@ router.get('/favouriteBlogs/:userId',auth, async (req, res) => {
 router.delete('/favouriteBlogs/:userId/:blogId',auth, async (req, res) => {
     let user;
     try {
+        // Validate User
         user = await User.findById(req.params.userId);
         if (user == null) {
             return res.status(400).json({ message: "User does not exist" });
         }
         res.user = user;
-        //await res.user.favouriteBlogs.reduce((blog) => blog._id.toString() == req.params.blogId);
         
         const blogs = user.favouriteBlogs;
                 
@@ -406,11 +403,7 @@ router.post('/cartProducts/:userId/:productId',auth, async (req, res) => {
     }
 
     //All params OK
-    
-    // let currentProduct =  products.find((product) =>  product._id.toString() === productId);
-    // if(!currentProduct){
-    //     return res.status(404).send({message: "Product is Null"})
-    // }
+
     User.findOne({_id: userId}, function(err, user) {
         if(err) {
             return res.status(404).send({message: err.message});
@@ -419,21 +412,10 @@ router.post('/cartProducts/:userId/:productId',auth, async (req, res) => {
             if(!user) {
                 return res.status(404).json({message:"No User found"})
             }
-            // const products = user.recentlyViewedProducts;
-            // let flag=1;
-            // if(products.length !== 0){
-            //     products.forEach(ele => {
-            //         if(currentProduct._id.toString() === ele._id.toString()){
-            //             flag = 0;
-            //         }
-            //     });
-            // }
-            // if(flag){
-            //     user.recentlyViewedProducts.push(currentProduct);
-            // }
             const products = user.cartProducts;
             let flag=1;
             let quantity = 0;
+            // Check if product already exists in User's cart
             if(products.length !== 0){
                 products.forEach(ele => {
                     if(productId.toString() === ele.productId){
@@ -443,6 +425,7 @@ router.post('/cartProducts/:userId/:productId',auth, async (req, res) => {
                     }
                 })
             }
+            // If product does not exist in User's cart
             if(flag){
                 const newProduct = {
                     productId,
@@ -450,6 +433,7 @@ router.post('/cartProducts/:userId/:productId',auth, async (req, res) => {
                 }
                 user.cartProducts.push(newProduct);
             }
+            // if alreay exists in User's cart increase quantity
             else{
                 const newProduct = {
                     productId,
@@ -459,14 +443,6 @@ router.post('/cartProducts/:userId/:productId',auth, async (req, res) => {
                 user.cartProducts = products;
             }
             
-            //user.cartProducts.push(currentProduct);
-
-            // user.cartProducts.filter((v,i,a)=>a.findIndex(v2=>(v2._id===v._id))===i)
-            // user.cartProducts = user.cartProducts.filter((value, index, self) =>
-            // index === self.findIndex((t) => (
-            //   t._id.toString() === value._id.toString()
-            // ))
-            // )
             user.save(function(err) {
                 if(!err) {
                     return res.status(200).json({ message: `Product Successfully Added to Cart`})
@@ -495,10 +471,6 @@ router.get('/cartProducts/:userId',auth, async (req, res) => {
     else{
         const productIds = user.cartProducts;
         const products = [];
-        // products.forEach(async (id) => {
-        //     products.push(await Product.findById(id));
-        // });
-
         await Promise.all(productIds.map(async (prod) => {
             const product = await Product.findById(prod.productId);
             const quantity = prod.quantity;
@@ -546,12 +518,6 @@ router.delete('/cartProducts/:userId/:productId',auth, async (req, res) => {
                 }
                 user.cartProducts = products;
                 console.log(products)
-                // let newCart = await user.cartProducts.reduce((product) => {
-                //     console.log(product._id.toString());
-                //     console.log(productId)
-                //     return product._id.toString() === productId
-                // });
-                
                 user.save(function(err) {
                     if(!err) {
                         return res.status(200).json({ message: "Removed from Cart succesfully" });

@@ -21,7 +21,7 @@ let logsinfo = fsr.getStream({filename:'./matchup-logs/logs.log', frequency:"1h"
 app.use(morgan('combined', {stream: logsinfo}))
 
 
-/* global process */
+/* ODM mongoose */
 mongoose.connect(process.env.MONGODB_URI);
 const db = mongoose.connection;
 db.on("error", (error) => console.log(error));
@@ -34,6 +34,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(express.json());
 
+// routes
 app.use("/", routes);
 
 

@@ -8,19 +8,22 @@ const DIR = './uploads';
 const fs = require('fs');
 const path = require('path');
 
+//firebase
 const admin = require("firebase-admin");
 const serviceAccount = require("../serviceAccountKey.json");
 const uuid = require('uuid-v4');
 
 //Auth
-
 const auth = require("../middleware/auth");
 
+
+//multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       cb(null, DIR);
     },
     filename: (req, file, cb) => {
+      // original filename will be saved (ex : user.png will be saved as user.png)
       const fileName = file.originalname.toLowerCase().split(' ').join('-');
       cb(null, fileName)
     }
@@ -29,6 +32,7 @@ const storage = multer.diskStorage({
 var upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
+        //only jpg , png , jpeg are accepted
       if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
         cb(null, true);
       } else {
@@ -37,6 +41,9 @@ var upload = multer({
       }
     }
 });
+
+
+
 // Get all the Blogs
 router.get("/", async (req, res) => {
     try {
@@ -53,9 +60,15 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
     try {
 
     const {sellerUserId} = req.body;
-    if(!req.body.title || req.body.description <=0 || !req.body.sellerUserId){
+    // Null Checker for title description sellerUserId
+    if(!req.body.title || !req.body.description || !req.body.sellerUserId){
         return res.status(422).json({error:"Please Enter All Fields!"});
     }
+    if(res.body.description.length <= 50){
+        return res.status(422).json({error:"Description should contain at least 50 characters"});
+    }
+
+    // Check whether the seller is present in User Collection
     User.findOne({sellerUserId})
     .then(savedUser => {
         if(!savedUser){
@@ -65,6 +78,8 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
     .catch(err => {
         console.log(err);
     })
+
+
     /* Firebase */
 
     if (admin.apps.length === 0) {
@@ -74,7 +89,7 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
         });
     }
     var bucket = admin.storage().bucket();
-
+            // Upload image to firebase storage
     var filename = path.join(__dirname , '..' ,'uploads' , req.file.filename);
     let productImageLink;
     async function uploadFile() {
@@ -90,7 +105,6 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
       
         // Uploads a local file to the bucket
         await bucket.upload(filename, {
-          // Support for HTTP requests made with `Accept-Encoding: gzip`
           gzip: true,
           metadata: metadata,
         })
@@ -105,11 +119,13 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
       
     }
       
+        // Upload file
     await uploadFile()
-      .catch((err) => {
+    .catch((err) => {
         return res.status(500).json({message: "Error Uploading image" , error:err.message});
-      });
+    });
 
+    //Create new Blog
     const blog = new Blog({
         title: req.body.title,
         description: req.body.description,
@@ -144,6 +160,7 @@ router.patch("/:id",auth, async (req, res) => {
                 if(!blog) {
                     return res.status(404).json({message:"No Blog found"})
                 }
+                // Update either title or description or both
                 if(req.body.title) {
                     blog.title = req.body.title;
                 }
@@ -170,11 +187,13 @@ router.patch("/:id",auth, async (req, res) => {
 router.delete("/:id",auth, async (req, res) => {
     let blog;
     try {
+        // find the blog by Id
         blog = await Blog.findById(req.params.id);
         if (blog == null) {
             return res.status(400).json({ message: "Blog does not exist" });
         }
         res.blog = blog;
+        // Delete the blog from the database
         await res.blog.remove();
         return res.status(200).json({ message: "Blog deleted succesfully" });
 

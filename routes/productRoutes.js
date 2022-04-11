@@ -8,6 +8,7 @@ const DIR = './uploads';
 const fs = require('fs');
 const path = require('path');
 
+// firebase
 const admin = require("firebase-admin");
 const serviceAccount = require("../serviceAccountKey.json");
 const uuid = require('uuid-v4');
@@ -15,7 +16,7 @@ const uuid = require('uuid-v4');
 //Auth
 const auth = require("../middleware/auth");
 
-
+// Multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       cb(null, DIR);
@@ -49,8 +50,7 @@ router.get("/", async (req, res) => {
 //Get all products by pageNo
 router.get("/:pageNo", async (req, res) => {
     try {
-        // const products = await Product.find();
-        // res.json(products);
+        // Send Products with in range
         const pageNo = req.params.pageNo;
         const pageSize = 8;
         const totalProducts = await Product.count();
@@ -73,11 +73,12 @@ router.get("/:pageNo", async (req, res) => {
 router.post("/",auth, upload.single('file') ,async (req, res) => {
 
     try {
-
     const {sellerUserId} = req.body;
     if(!req.body.name || req.body.price <=0 || !req.body.sellerUserId){
         return res.status(422).json({error:"Please Enter All Fields!"});
     }
+
+    // Check whether the seller is present in User Collection
     User.findOne({sellerUserId})
     .then(savedUser => {
         if(!savedUser){
@@ -87,6 +88,8 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
     .catch(err => {
         console.log(err);
     })
+
+
     /* Firebase */
     if (admin.apps.length === 0) {
         admin.initializeApp({
@@ -102,7 +105,6 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
 
         const metadata = {
           metadata: {
-            // This line is very important. It's to create a download token.
             firebaseStorageDownloadTokens: uuid()
           },
           contentType: req.file.contentType,
@@ -111,7 +113,6 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
       
         // Uploads a local file to the bucket
         await bucket.upload(filename, {
-          // Support for HTTP requests made with `Accept-Encoding: gzip`
           gzip: true,
           metadata: metadata,
         })
@@ -124,23 +125,24 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
       }
       
     await uploadFile()
-      .catch((err) => {
-        console.log(err)
-      });
-
-    const product = new Product({
-        name: req.body.name,
-        price: req.body.price,
-        sellerUserId : sellerUserId,
-        cover : coverLink
+    .catch((err) => {
+    console.log(err)
     });
-    try {
-        const newProduct = await product.save();
-        return res.status(201).json({message : "Successfully saved product",product : newProduct});
-    } catch (error) {
-        console.log(error)
-        return res.status(400).json({ message: "Error Adding new Product",error : error.message });
-    }
+
+            const product = new Product({
+                name: req.body.name,
+                price: req.body.price,
+                sellerUserId : sellerUserId,
+                cover : coverLink
+            });
+            // Save new product
+            try {
+                const newProduct = await product.save();
+                return res.status(201).json({message : "Successfully saved product",product : newProduct});
+            } catch (error) {
+                console.log(error)
+                return res.status(400).json({ message: "Error Adding new Product",error : error.message });
+            }
                 
     } catch (error) {
         return res.status(500).json({ message: error.message });
