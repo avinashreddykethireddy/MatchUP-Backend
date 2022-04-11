@@ -150,7 +150,7 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
 });
 
 // Get a single Product
-router.get("/:id",auth, getProduct, async (req, res) => {
+router.get("/:id", getProduct, async (req, res) => {
     return res.status(200).json(res.product);
 });
 
