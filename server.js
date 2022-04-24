@@ -7,6 +7,9 @@ const { initializeApp } = require("firebase/app");
 const { getAnalytics } = require("firebase/analytics");
 const morgan = require('morgan');
 const fsr = require('file-stream-rotator');
+const fs = require('fs');
+const path = require('path');
+
 require("dotenv").config();
 
 const app = express();
@@ -15,10 +18,15 @@ app.use(cors());
 
 /* Morgan */
 
-let logsinfo = fsr.getStream({filename:'./matchup-logs/logs.log', frequency:"1h",verbose: true, date_format: "YYYY-MM-DD",}); 
+// let logsinfo = fsr.getStream({filename:'./matchup-logs/logs.log', frequency:"1h",verbose: true, date_format: "YYYY-MM-DD",}); 
 
-/* app.use(morgan(':method :url :status :res[content-length] - :response-time ms', {stream: logsinfo})) */
-app.use(morgan('combined', {stream: logsinfo}))
+// /* app.use(morgan(':method :url :status :res[content-length] - :response-time ms', {stream: logsinfo})) */
+// app.use(morgan('combined', {stream: logsinfo}))
+
+/* Morgan new */
+const accessLogStream = fs.createWriteStream(path.join(__dirname, 'matchup-logs','logs.log'), { flags: 'a' })
+app.use(morgan(':method :url :status :date[iso] :response-time ms', { stream: accessLogStream}));
+app.use(morgan(':method :url :status :date[iso] :response-time ms'));
 
 
 /* ODM mongoose */

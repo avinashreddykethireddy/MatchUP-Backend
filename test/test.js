@@ -7,6 +7,7 @@ const should = chai.should();
 chai.use(chaiHttp);
 
 describe("Products", function()  {
+    // Disable time limit
     this.timeout(0);
     // Get all the Products
     it("Should Fetch all the Products", (done) => {
