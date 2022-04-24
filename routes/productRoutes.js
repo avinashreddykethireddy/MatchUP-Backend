@@ -56,24 +56,66 @@ var upload = multer({
 //redis server running
 router.get("/", async (req, res) => {
     try {
-        client.get('allProducts', async (err,data) => {
-            
+        // const cc = await client.get("hello1" , (err, status) => {
+        //     if(err){
+        //         console.log(err);
+        //     }
+        //     else{
+        //         console.log(status);
+        //     }
+        // });
+        // console.log("dww ", cc);
+
+        // await client.setEx("hello1",20,"world", function (err, status) {
+        //     if (err) throw err;
+        //     console.log(status); // true
+        //     return status;
+        //   });
+        // console.log(await client.get("hello"));
+        
+        const allProd = await client.get("allProducts", async (err,data) => {
             if(err){
                 console.log(err);
                 throw err;
             }
-
+            console.log("jdwijwd");
             if(data){
                 console.log("Data fetched from redis!");
                 return res.status(200).send(JSON.parse(data));
-            } else {
-                const products = await Product.find();
-                client.setex('allProducts', 600, JSON.stringify(products));
-                console.log("Data fetched from database");
-                return res.json(products);
             }
-        
         });
+
+        if(allProd == null){
+            const products = await Product.find();
+            await client.setEx("allProducts", 20, JSON.stringify(products), (err, status) => {
+                if (err) throw err;
+                console.log(status); // true
+                return status;
+            });
+            console.log("Data fetched from database");
+            return res.json(products);
+        } else {
+            console.log("Data fetched from redis!");
+            return res.status(200).send(JSON.parse(allProd));
+        }
+
+        // await client.get("allProducts", async (err,data) => {
+        //     if(err){
+        //         console.log(err);
+        //         throw err;
+        //     }
+        //     console.log("jdwijwd");
+        //     if(data){
+        //         console.log("Data fetched from redis!");
+        //         return res.status(200).send(JSON.parse(data));
+        //     } else {
+        //         const products = await Product.find();
+        //         await client.setEx('allProducts', 600, JSON.stringify(products));
+        //         console.log("Data fetched from database");
+        //         return res.json(products);
+        //     }
+        // });
+
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
