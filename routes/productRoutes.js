@@ -8,6 +8,9 @@ const DIR = './uploads';
 const fs = require('fs');
 const path = require('path');
 
+// redis
+const redisClient = require('../models/redis');
+
 // firebase
 const admin = require("firebase-admin");
 const serviceAccount = require("../serviceAccountKey.json");
@@ -15,6 +18,7 @@ const uuid = require('uuid-v4');
 
 //Auth
 const auth = require("../middleware/auth");
+const client = require("../models/redis");
 
 // Multer
 const storage = multer.diskStorage({
@@ -39,14 +43,84 @@ var upload = multer({
     }
 });
 //Get all the Products
+// router.get("/", async (req, res) => {
+//     try {
+//         const products = await Product.find();
+//         res.json(products);
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// });
+
+
+//redis server running
 router.get("/", async (req, res) => {
     try {
-        const products = await Product.find();
-        res.json(products);
+        // const cc = await client.get("hello1" , (err, status) => {
+        //     if(err){
+        //         console.log(err);
+        //     }
+        //     else{
+        //         console.log(status);
+        //     }
+        // });
+        // console.log("dww ", cc);
+
+        // await client.setEx("hello1",20,"world", function (err, status) {
+        //     if (err) throw err;
+        //     console.log(status); // true
+        //     return status;
+        //   });
+        // console.log(await client.get("hello"));
+        
+        const allProd = await client.get("allProducts", async (err,data) => {
+            if(err){
+                console.log(err);
+                throw err;
+            }
+            console.log("jdwijwd");
+            if(data){
+                console.log("Data fetched from redis!");
+                return res.status(200).send(JSON.parse(data));
+            }
+        });
+
+        if(allProd == null){
+            const products = await Product.find();
+            await client.setEx("allProducts", 20, JSON.stringify(products), (err, status) => {
+                if (err) throw err;
+                console.log(status); // true
+                return status;
+            });
+            console.log("Data fetched from database");
+            return res.json(products);
+        } else {
+            console.log("Data fetched from redis!");
+            return res.status(200).send(JSON.parse(allProd));
+        }
+
+        // await client.get("allProducts", async (err,data) => {
+        //     if(err){
+        //         console.log(err);
+        //         throw err;
+        //     }
+        //     console.log("jdwijwd");
+        //     if(data){
+        //         console.log("Data fetched from redis!");
+        //         return res.status(200).send(JSON.parse(data));
+        //     } else {
+        //         const products = await Product.find();
+        //         await client.setEx('allProducts', 600, JSON.stringify(products));
+        //         console.log("Data fetched from database");
+        //         return res.json(products);
+        //     }
+        // });
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        return res.status(500).json({ message: error.message });
     }
 });
+
 //Get all products by pageNo
 router.get("/:pageNo", async (req, res) => {
     try {
