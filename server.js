@@ -45,6 +45,11 @@ app.use(express.json());
 // routes
 app.use("/", routes);
 
+app.use(express.static('./build'))
+console.log(__dirname)
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, 'build', 'index.html'))
+})
 
 app.listen(5000, () => {
     console.log("The application has been started at http://localhost:5000");
