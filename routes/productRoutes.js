@@ -16,6 +16,9 @@ const uuid = require('uuid-v4');
 //Auth
 const auth = require("../middleware/auth");
 
+//Redis
+const client = require("../models/redis");
+
 // Multer
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -38,15 +41,60 @@ var upload = multer({
       }
     }
 });
-//Get all the Products
+
+async function getProducts() {
+    const allProd = await client.get("allProducts", async (err,data) => {
+        if(err){
+            console.log(err);
+            throw err;
+        }
+        if(data){
+            console.log("Data fetched from redis!");
+            return JSON.parse(data);
+        }
+    });
+
+    if(allProd == null){
+        const products = await Product.find();
+        await client.setEx("allProducts", 20, JSON.stringify(products), (err, status) => {
+            if (err) throw err;
+            console.log(status); // true
+            return status;
+        });
+        console.log("Data fetched from database");
+        return products;
+    } else {
+        console.log("Data fetched from redis!");
+        return JSON.parse(allProd);
+    }
+} 
+
+//redis server running
 router.get("/", async (req, res) => {
     try {
-        const products = await Product.find();
-        res.json(products);
+        // const cc = await client.get("hello1" , (err, status) => {
+        //     if(err){
+        //         console.log(err);
+        //     }
+        //     else{
+        //         console.log(status);
+        //     }
+        // });
+        // console.log("dww ", cc);
+
+        // await client.setEx("hello1",20,"world", function (err, status) {
+        //     if (err) throw err;
+        //     console.log(status); // true
+        //     return status;
+        //   });
+        // console.log(await client.get("hello"));
+        return res.status(200).send(await getProducts());
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        return res.status(500).json({ message: error.message });
     }
 });
+
 //Get all products by pageNo
 router.get("/:pageNo", async (req, res) => {
     try {
@@ -73,76 +121,90 @@ router.get("/:pageNo", async (req, res) => {
 router.post("/",auth, upload.single('file') ,async (req, res) => {
 
     try {
-    const {sellerUserId} = req.body;
-    if(!req.body.name || req.body.price <=0 || !req.body.sellerUserId){
-        return res.status(422).json({error:"Please Enter All Fields!"});
-    }
 
-    // Check whether the seller is present in User Collection
-    User.findOne({sellerUserId})
-    .then(savedUser => {
-        if(!savedUser){
-            return res.status(422).json({error:"Invalid User Details"});
+        const {sellerUserId} = req.body;
+
+        if(!req.body.name || req.body.price <= 0 || !req.body.sellerUserId || !req.body.available) {
+            return res.status(422).json({message: "Please Enter All Fields!"});
         }
-    })
-    .catch(err => {
-        console.log(err);
-    })
+        if(! (req.body.available > 0)) {
+            return res.status(422).json({message: "Available should be greater than zero"})
+        }
 
-
-    /* Firebase */
-    if (admin.apps.length === 0) {
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-            storageBucket: "matchup-444.appspot.com"
-        });
-    }
-    var bucket = admin.storage().bucket();
-
-    var filename = path.join(__dirname , '..' ,'uploads' , req.file.filename);
-    let coverLink;
-    async function uploadFile() {
-
-        const metadata = {
-          metadata: {
-            firebaseStorageDownloadTokens: uuid()
-          },
-          contentType: req.file.contentType,
-          cacheControl: 'public, max-age=31536000',
-        };
-      
-        // Uploads a local file to the bucket
-        await bucket.upload(filename, {
-          gzip: true,
-          metadata: metadata,
-        })
-        .then((data) => {
-            coverLink = ("https://storage.googleapis.com/matchup-444.appspot.com/" + req.file.filename);
-        })
-      
-      console.log(`${filename} uploaded.`);
-      
-      }
-      
-    await uploadFile()
-    .catch((err) => {
-    console.log(err)
-    });
-
-            const product = new Product({
-                name: req.body.name,
-                price: req.body.price,
-                sellerUserId : sellerUserId,
-                cover : coverLink
-            });
-            // Save new product
-            try {
-                const newProduct = await product.save();
-                return res.status(201).json({message : "Successfully saved product",product : newProduct});
-            } catch (error) {
-                console.log(error)
-                return res.status(400).json({ message: "Error Adding new Product",error : error.message });
+        // Check whether the seller is present in User Collection
+        User.findOne({sellerUserId})
+        .then(savedUser => {
+            if(!savedUser){
+                return res.status(422).json({error:"Invalid User Details"});
             }
+        })
+        .catch(err => {
+            console.log(err);
+        })
+
+        /* Firebase */
+        if (admin.apps.length === 0) {
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+                storageBucket: "matchup-444.appspot.com"
+            });
+        }
+        var bucket = admin.storage().bucket();
+
+        var filename = path.join(__dirname , '..' ,'uploads' , req.file.filename);
+        let coverLink;
+        async function uploadFile() {
+
+            const metadata = {
+            metadata: {
+                firebaseStorageDownloadTokens: uuid()
+            },
+            contentType: req.file.contentType,
+            cacheControl: 'public, max-age=31536000',
+            };
+        
+            // Uploads a local file to the bucket
+            await bucket.upload(filename, {
+            gzip: true,
+            metadata: metadata,
+            })
+            .then((data) => {
+                coverLink = ("https://storage.googleapis.com/matchup-444.appspot.com/" + req.file.filename);
+            })
+        
+        console.log(`${filename} uploaded.`);
+        
+        }
+        
+        await uploadFile()
+        .catch((err) => {
+        console.log(err)
+        });
+
+        const product = new Product({
+            name: req.body.name,
+            price: req.body.price,
+            sellerUserId : sellerUserId,
+            cover : coverLink,
+            available: req.body.available
+        });
+        // Save new product
+        try {
+            // delete key allProducts 
+            await client.del("allProducts", (err, reply) => {
+                if(err){
+                    console.log(err);
+                    throw err;
+                }
+                console.log("Redis reply",reply);
+            });
+
+            const newProduct = await product.save();
+            return res.status(201).json({message : "Successfully saved product",product : newProduct});
+        } catch (error) {
+            console.log(error)
+            return res.status(400).json({ message: "Error Adding new Product",error : error.message });
+        }
                 
     } catch (error) {
         return res.status(500).json({ message: error.message });
@@ -150,7 +212,7 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
 });
 
 // Get a single Product
-router.get("/:id", getProduct, async (req, res) => {
+router.get("/:id", auth,getProduct, async (req, res) => {
     return res.status(200).json(res.product);
 });
 
@@ -171,8 +233,17 @@ router.patch("/:id",auth, async (req, res) => {
                 if(req.body.price) {
                     product.price = req.body.price;
                 }
-                product.save(function(err) {
+                product.save(async function(err) {
                     if(!err) {
+                        // delete key allProducts 
+                        await client.del("allProducts", (err, reply) => {
+                            if(err){
+                                console.log(err);
+                                throw err;
+                            }
+                            console.log("Redis reply",reply);
+                        });
+
                         return res.status(200).json({ message: `Product Updated Successfully`})
                     }
                     else {
@@ -197,6 +268,15 @@ router.delete("/:id",auth, async (req, res) => {
         }
         res.product = product;
         await res.product.remove();
+        
+        // delete key allProducts 
+        await client.del("allProducts", (err, reply) => {
+            if(err){
+                console.log(err);
+                throw err;
+            }
+            console.log("Redis reply",reply);
+        });
         return res.status(200).json({ message: "Product deleted succesfully" });
 
     } catch (error) {

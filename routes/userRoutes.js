@@ -397,10 +397,16 @@ router.post('/cartProducts/:userId/:productId',auth, async (req, res) => {
     if(!products){
         return res.status(422).send({message: "Products are Empty (or) Failed to fetch products"});
     }
-    let isProductExists = products.find((product) => product._id.toString() === productId);
-    if(!isProductExists){
+    let curProduct = products.find((product) => product._id.toString() === productId);
+    if(!curProduct){
         return res.status(404).send({message: "Product not Found"});
     }
+
+    // Check Product is available or not for the quantity
+    if(!(curProduct.available > 0 && (curProduct.available - quantity) >= 0)){
+        return res.status(404).send({message: "Product is out of stock"});
+    }
+
 
     //All params OK
 

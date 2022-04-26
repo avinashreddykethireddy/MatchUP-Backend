@@ -9,6 +9,10 @@ const productSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    available:{
+        type: Number,
+        required: true,
+    },
     cover: {
         type : String,
         required: true,
