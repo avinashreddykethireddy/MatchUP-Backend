@@ -515,7 +515,6 @@ components:
                 - name
                 - price
                 - file
-                - sellerUserId
                 - available
             properties:
                 name:
@@ -527,9 +526,6 @@ components:
                 available:
                     type: number
                     description: Available number of products
-                sellerUserId :
-                    type: string
-                    description: User Id of the Product Seller
                 file:
                     type : file
                     description : Image of the Product
@@ -545,7 +541,6 @@ components:
                 - title
                 - description
                 - file
-                - sellerUserId
             properties:
                 title:
                     type: string
@@ -553,9 +548,6 @@ components:
                 description:
                     type: string
                     description: Description about the Product
-                sellerUserId :
-                    type: string
-                    description: User Id of the Blog Writer
                 file:
                     type : file
                     description : Image of the Product

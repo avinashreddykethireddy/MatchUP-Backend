@@ -122,9 +122,10 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
 
     try {
 
-        const {sellerUserId} = req.body;
+        const sellerUserId = req.userId
+        console.log(sellerUserId)
 
-        if(!req.body.name || req.body.price <= 0 || !req.body.sellerUserId || !req.body.available) {
+        if(!req.body.name || req.body.price <= 0  || !req.body.available) {
             return res.status(422).json({message: "Please Enter All Fields!"});
         }
         if(! (req.body.available > 0)) {
@@ -194,13 +195,13 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
             await client.del("allProducts", (err, reply) => {
                 if(err){
                     console.log(err);
-                    throw err;
+                    //throw err;
                 }
                 console.log("Redis reply",reply);
             });
 
             const newProduct = await product.save();
-            return res.status(201).json({message : "Successfully saved product",product : newProduct});
+            return res.status(200).json({message : "Successfully saved product",product : newProduct});
         } catch (error) {
             console.log(error)
             return res.status(400).json({ message: "Error Adding new Product",error : error.message });

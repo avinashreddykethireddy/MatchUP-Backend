@@ -88,13 +88,10 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
 
     try {
 
-    const {sellerUserId} = req.body;
+    const sellerUserId = req.userId;
     // Null Checker for title description sellerUserId
-    if(!req.body.title || !req.body.description || !req.body.sellerUserId){
+    if(!req.body.title || !req.body.description){
         return res.status(422).json({error:"Please Enter All Fields!"});
-    }
-    if(res.body.description.length <= 50){
-        return res.status(422).json({error:"Description should contain at least 50 characters"});
     }
 
     // Check whether the seller is present in User Collection
