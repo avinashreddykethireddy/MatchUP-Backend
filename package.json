@@ -31,5 +31,8 @@
     "uuid-v4": "^0.1.0",
     "validator": "^13.7.0",
     "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "jest": "^28.0.1"
   }
 }

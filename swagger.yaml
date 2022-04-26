@@ -20,6 +20,11 @@ paths:
         get:
             summary: Get all the Products
             tags: [Product]
+            parameters:
+                - name: x-auth-token
+                  in: header
+                  type: string
+                  required: true
             responses:
                 "200":
                     description: The list of all the Products
@@ -511,6 +516,7 @@ components:
                 - price
                 - file
                 - sellerUserId
+                - available
             properties:
                 name:
                     type: string
@@ -518,6 +524,9 @@ components:
                 price:
                     type: number
                     description: Price of the Product that is being sell
+                available:
+                    type: number
+                    description: Available number of products
                 sellerUserId :
                     type: string
                     description: User Id of the Product Seller
@@ -529,6 +538,7 @@ components:
                 price: 9999,
                 cover : https://storage.googleapis.com/matchup-444.appspot.com/macbook.jpg
                 sellerUserId: 6246e608b1923e4b8f0f9ece
+                available : 2
         Blog:
             type: object
             required:

@@ -124,8 +124,11 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
 
         const {sellerUserId} = req.body;
 
-        if(!req.body.name || req.body.price <= 0 || !req.body.sellerUserId){
-            return res.status(422).json({error: "Please Enter All Fields!"});
+        if(!req.body.name || req.body.price <= 0 || !req.body.sellerUserId || !req.body.available) {
+            return res.status(422).json({message: "Please Enter All Fields!"});
+        }
+        if(! (req.body.available > 0)) {
+            return res.status(422).json({message: "Available should be greater than zero"})
         }
 
         // Check whether the seller is present in User Collection
@@ -182,7 +185,8 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
             name: req.body.name,
             price: req.body.price,
             sellerUserId : sellerUserId,
-            cover : coverLink
+            cover : coverLink,
+            available: req.body.available
         });
         // Save new product
         try {
@@ -208,7 +212,7 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
 });
 
 // Get a single Product
-router.get("/:id", getProduct, async (req, res) => {
+router.get("/:id", auth,getProduct, async (req, res) => {
     return res.status(200).json(res.product);
 });
 
