@@ -10,7 +10,7 @@ describe("Products", function()  {
     // Disable time limit
     this.timeout(0);
     // Get all the Products
-    it("Should Fetch all the Products", (done) => {
+    it("Fetch all the Products", (done) => {
         chai.request(server)
             .get("/products/")
             .end((err, res) => {
