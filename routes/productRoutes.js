@@ -17,7 +17,7 @@ const uuid = require('uuid-v4');
 const auth = require("../middleware/auth");
 
 //Redis
-const client = require("../models/redis");
+// const client = require("../models/redis");
 
 // Multer
 const storage = multer.diskStorage({
@@ -43,30 +43,32 @@ var upload = multer({
 });
 
 async function getProducts() {
-    const allProd = await client.get("allProducts", async (err,data) => {
-        if(err){
-            console.log(err);
-            throw err;
-        }
-        if(data){
-            console.log("Data fetched from redis!");
-            return JSON.parse(data);
-        }
-    });
+    // const allProd = await client.get("allProducts", async (err,data) => {
+    //     if(err){
+    //         console.log(err);
+    //         throw err;
+    //     }
+    //     if(data){
+    //         console.log("Data fetched from redis!");
+    //         return JSON.parse(data);
+    //     }
+    // });
+    const products = await Product.find();
+    return products;
 
-    if(allProd == null){
-        const products = await Product.find();
-        await client.setEx("allProducts", 20, JSON.stringify(products), (err, status) => {
-            if (err) throw err;
-            console.log(status); // true
-            return status;
-        });
-        console.log("Data fetched from database");
-        return products;
-    } else {
-        console.log("Data fetched from redis!");
-        return JSON.parse(allProd);
-    }
+    // if(allProd == null){
+    //     const products = await Product.find();
+    //     await client.setEx("allProducts", 20, JSON.stringify(products), (err, status) => {
+    //         if (err) throw err;
+    //         console.log(status); // true
+    //         return status;
+    //     });
+    //     console.log("Data fetched from database");
+    //     return products;
+    // } else {
+    //     console.log("Data fetched from redis!");
+    //     return JSON.parse(allProd);
+    // }
 } 
 
 //redis server running
@@ -192,13 +194,13 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
         // Save new product
         try {
             // delete key allProducts 
-            await client.del("allProducts", (err, reply) => {
-                if(err){
-                    console.log(err);
-                    //throw err;
-                }
-                console.log("Redis reply",reply);
-            });
+            // await client.del("allProducts", (err, reply) => {
+            //     if(err){
+            //         console.log(err);
+            //         //throw err;
+            //     }
+            //     console.log("Redis reply",reply);
+            // });
 
             const newProduct = await product.save();
             return res.status(200).json({message : "Successfully saved product",product : newProduct});
@@ -237,13 +239,13 @@ router.patch("/:id",auth, async (req, res) => {
                 product.save(async function(err) {
                     if(!err) {
                         // delete key allProducts 
-                        await client.del("allProducts", (err, reply) => {
-                            if(err){
-                                console.log(err);
-                                throw err;
-                            }
-                            console.log("Redis reply",reply);
-                        });
+                        // await client.del("allProducts", (err, reply) => {
+                        //     if(err){
+                        //         console.log(err);
+                        //         throw err;
+                        //     }
+                        //     console.log("Redis reply",reply);
+                        // });
 
                         return res.status(200).json({ message: `Product Updated Successfully`})
                     }
@@ -270,14 +272,14 @@ router.delete("/:id",auth, async (req, res) => {
         res.product = product;
         await res.product.remove();
         
-        // delete key allProducts 
-        await client.del("allProducts", (err, reply) => {
-            if(err){
-                console.log(err);
-                throw err;
-            }
-            console.log("Redis reply",reply);
-        });
+        // // delete key allProducts 
+        // await client.del("allProducts", (err, reply) => {
+        //     if(err){
+        //         console.log(err);
+        //         throw err;
+        //     }
+        //     console.log("Redis reply",reply);
+        // });
         return res.status(200).json({ message: "Product deleted succesfully" });
 
     } catch (error) {
