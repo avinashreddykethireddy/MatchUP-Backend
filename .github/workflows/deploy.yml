@@ -41,8 +41,8 @@ jobs:
           password: Matchup@123456
           port: 22
           script: |
-            cd ~/code/Matchup-Backend
+            cd ~/code/MatchUP-Backend
             git pull origin master
-            sudo docker-compose down
-            sudo docker-compose up --build -d
+            sudo docker compose down
+            sudo docker compose up --build -d
             sudo systemctl restart nginx
