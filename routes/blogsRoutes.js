@@ -17,7 +17,7 @@ const uuid = require('uuid-v4');
 const auth = require("../middleware/auth");
 
 //Redis
-const client = require("../models/redis");
+// const client = require("../models/redis");
 
 //multer
 const storage = multer.diskStorage({
@@ -45,30 +45,30 @@ var upload = multer({
 });
 
 async function getBlogs() {
-    const allBlogs = await client.get("allBlogs", async (err,data) => {
-        if(err){
-            console.log(err);
-            throw err;
-        }
-        if(data){
-            console.log("Data fetched from redis! blogs");
-            return JSON.parse(data);
-        }
-    });
-
-    if(allBlogs == null){
-        const blogs = await Blog.find();
-        await client.setEx("allBlogs", 20, JSON.stringify(blogs), (err, status) => {
-            if (err) throw err;
-            console.log(status); // true
-            return status;
-        });
-        console.log("Blogs Data fetched from database");
-        return blogs;
-    } else {
-        console.log("Blogs Data fetched from redis!");
-        return JSON.parse(allBlogs);
-    }
+    // const allBlogs = await client.get("allBlogs", async (err,data) => {
+    //     if(err){
+    //         console.log(err);
+    //         throw err;
+    //     }
+    //     if(data){
+    //         console.log("Data fetched from redis! blogs");
+    //         return JSON.parse(data);
+    //     }
+    // });
+    const blogs = await Blog.find();
+    // await client.setEx("allBlogs", 20, JSON.stringify(blogs), (err, status) => {
+    //     if (err) throw err;
+    //     console.log(status); // true
+    //     return status;
+    // });
+    console.log("Blogs Data fetched from database");
+    return blogs;
+    // if(allBlogs == null){
+   
+    // } else {
+    //     console.log("Blogs Data fetched from redis!");
+    //     return JSON.parse(allBlogs);
+    // }
 } 
 
 // Get all the Blogs
@@ -160,13 +160,13 @@ router.post("/",auth, upload.single('file') ,async (req, res) => {
     });
     try {
         // delete key allBlogs
-        await client.del("allBlogs", (err, reply) => {
-            if(err){
-                console.log(err);
-                throw err;
-            }
-            console.log("Redis reply",reply);
-        });
+        // await client.del("allBlogs", (err, reply) => {
+        //     if(err){
+        //         console.log(err);
+        //         throw err;
+        //     }
+        //     console.log("Redis reply",reply);
+        // });
         const newBlog = await blog.save();
         return res.status(201).json({message : "Successfully saved blog",blog : newBlog});
     } catch (error) {
@@ -203,13 +203,13 @@ router.patch("/:id",auth, async (req, res) => {
                 }
                 blog.save(async function(err) {
                     // delete key allBlogs
-                    await client.del("allBlogs", (err, reply) => {
-                        if(err){
-                            console.log(err);
-                            throw err;
-                        }
-                        console.log("Redis reply",reply);
-                    });
+                    // await client.del("allBlogs", (err, reply) => {
+                    //     if(err){
+                    //         console.log(err);
+                    //         throw err;
+                    //     }
+                    //     console.log("Redis reply",reply);
+                    // });
                     if(!err) {
                         return res.status(200).json({ message: `Blog Updated Successfully`})
                     }
@@ -238,13 +238,13 @@ router.delete("/:id",auth, async (req, res) => {
         // Delete the blog from the database
         await res.blog.remove();
         // delete key allBlogs
-        await client.del("allBlogs", (err, reply) => {
-            if(err){
-                console.log(err);
-                throw err;
-            }
-            console.log("Redis reply",reply);
-        });
+        // await client.del("allBlogs", (err, reply) => {
+        //     if(err){
+        //         console.log(err);
+        //         throw err;
+        //     }
+        //     console.log("Redis reply",reply);
+        // });
         return res.status(200).json({ message: "Blog deleted succesfully" });
 
     } catch (error) {
