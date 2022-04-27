@@ -50,9 +50,10 @@ console.log(__dirname)
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'build', 'index.html'))
 })
+const PORT = process.env.PORT || 5000;
 
-app.listen(5000, () => {
-    console.log("The application has been started at http://localhost:5000");
+app.listen(PORT, () => {
+    console.log(`The application has been started at ${PORT}`);
 });
 
 module.exports = app;
