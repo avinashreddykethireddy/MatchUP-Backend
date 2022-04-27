@@ -22,7 +22,8 @@ jobs:
       - name: Install dependencies & run tests
         run: |
           cd server
-          npm ci
+          npm install
+          npm run test
   build:
     name: Deploy to VM Instance
     runs-on: ubuntu-latest
