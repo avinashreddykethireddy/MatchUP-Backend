@@ -72,7 +72,7 @@ router.post("/signup",upload.single('file'), async (req,res)=>{
     await User.findOne({email})
     .then((savedUser)=>{
         if(savedUser){
-            return res.status(422).json({message:"User already exsist"})
+            return res.status(302).json({message:"User already exsist"})
         }
     })
     /* Store Profile Image at Firebase */
@@ -450,11 +450,21 @@ router.post('/cartProducts/:userId/:productId',auth, async (req, res) => {
             }
             
             user.save(function(err) {
-                if(!err) {
-                    return res.status(200).json({ message: `Product Successfully Added to Cart`})
+                if(err) {
+                    return res.status(422).json({ message: "Error Adding Product to Cart"});
+
                 }
                 else {
-                    return res.status(422).json({ message: "Error Adding Product to Cart"});
+                    Product.findByIdAndUpdate(productId, { available:  (curProduct.available - quantity)},
+                            function (err, data) {
+                        if (err){
+                            console.log(err);
+                            return res.status(500).json({ message: "Error  product"})
+                        }
+                        else{
+                            return res.status(200).json({ message: `Product Successfully Added to Cart`})
+                        }
+                    });
                 }
             });
         }
