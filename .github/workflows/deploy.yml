@@ -30,7 +30,7 @@ jobs:
       - name: ssh into machine, clone repo
         uses: appleboy/ssh-action@master
         with:
-          host: matchup.northcentralus.cloudapp.azure.com
+          host: matchupfinish.eastus.cloudapp.azure.com
           username: matchup
           password: Matchup@123456
           port: 22
