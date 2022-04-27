@@ -21,8 +21,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install dependencies & run tests
         run: |
-          cd server
           npm ci
+          npm run test
   build:
     name: Deploy to VM Instance
     runs-on: ubuntu-latest
